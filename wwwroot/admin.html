@@ -1,0 +1,564 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSD Admin Paneli</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { brand: { 50: '#fdf2f2', 100: '#fce8e8', 500: '#ef4444', 600: '#C60018', 700: '#a30014' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        .section {
+            display: none;
+        }
+
+            .section.active {
+                display: block;
+            }
+
+        #toast {
+            transition: transform .3s cubic-bezier(0.4, 0, 0.2, 1), opacity .3s;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col font-sans selection:bg-brand-100 selection:text-brand-700">
+
+    <nav class="bg-brand-600 border-b border-brand-700 h-16 flex items-center justify-between px-6 sticky top-0 z-50 shadow-md">
+        <div class="flex items-center gap-3">
+            <img src="hsd-logo-white.png" alt="HSD Logo" class="h-8 object-contain">
+            <span class="font-bold text-lg text-white border-l border-brand-500 pl-3 ml-1">Admin Paneli</span>
+        </div>
+        <a href="/" target="_blank" class="flex items-center gap-2 text-sm font-semibold text-white hover:text-brand-100 transition-colors bg-brand-700 px-4 py-2 rounded-xl shadow-inner border border-brand-500">
+            Siteye dön <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+        </a>
+    </nav>
+
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col p-4 gap-1 overflow-y-auto hidden md:flex shrink-0 shadow-sm z-10">
+            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-2 mt-2">Test Yönetimi</div>
+
+            <button onclick="switchSection('quizzes', this)" class="side-item active w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-brand-700 bg-brand-50 transition-colors text-left border border-brand-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Testler
+            </button>
+
+            <button onclick="switchSection('questions', this)" class="side-item w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors text-left border border-transparent">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Sorular
+            </button>
+
+            <button onclick="switchSection('criteria', this)" class="side-item w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors text-left border border-transparent">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                Sonuç Kriterleri
+            </button>
+
+            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-2 mt-8">Sistem</div>
+            <button onclick="switchSection('settings', this)" class="side-item w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors text-left border border-transparent">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Bağlantı & Ayarlar
+            </button>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-6 lg:p-10 bg-gray-50/50">
+
+            <div id="section-quizzes" class="section active max-w-4xl mx-auto">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Testler</h1>
+                        <p class="text-sm text-gray-500 mt-1">Sistemdeki tüm testleri yönet veya yeni bir test oluştur.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-8 shadow-sm">
+                    <h2 class="text-sm font-bold text-gray-900 mb-4">Yeni Test Oluştur</h2>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input type="text" id="new-quiz-title" placeholder="Örn: Yazılım Geliştirici Profil Testi" class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-500 focus:bg-white transition-colors">
+                        <button onclick="saveNewQuiz()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-8 py-3 rounded-xl transition-colors whitespace-nowrap shadow-md">Testi Oluştur</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="admin-quiz-list">
+                </div>
+            </div>
+
+            <div id="section-questions" class="section max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Sorular</h1>
+                        <p class="text-sm text-gray-500 mt-1">Seçili teste soru ve şık ekle, puanları belirle.</p>
+                    </div>
+                    <div class="flex items-center gap-3 bg-white p-2 rounded-xl border border-gray-200 shadow-sm w-full md:w-auto">
+                        <select id="quiz-sel" onchange="loadQuestions(this.value)" class="bg-gray-50 border-none rounded-lg text-sm px-3 py-2 outline-none cursor-pointer flex-1 font-semibold text-gray-700 focus:ring-2 focus:ring-brand-100">
+                            <option value="">Önce test seçin...</option>
+                        </select>
+                        <button onclick="toggleAddQForm()" class="bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white font-bold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">
+                            + Soru Ekle
+                        </button>
+                    </div>
+                </div>
+
+                <div id="add-q-form" class="hidden bg-white border border-brand-200 rounded-2xl p-6 mb-8 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-brand-600"></div>
+                    <h3 class="font-bold text-gray-900 mb-4 text-lg" id="form-q-title">Yeni Soru</h3>
+
+                    <div class="mb-6">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Soru Metni</label>
+                        <input type="text" id="new-q-text" placeholder="Soruyu buraya yaz..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-brand-500 focus:bg-white transition-colors font-medium text-gray-900">
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Şıklar & Puanlar</label>
+                            <button onclick="addOptField()" class="text-xs font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1">+ Şık Ekle</button>
+                        </div>
+                        <div id="new-opts-list" class="flex flex-col gap-3"></div>
+                    </div>
+
+                    <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-100">
+                        <button onclick="saveNewQuestion()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-3 rounded-xl transition-colors shadow-md" id="save-btn">Soruyu Kaydet</button>
+                        <button onclick="toggleAddQForm()" class="px-6 py-3 rounded-xl text-gray-600 font-bold hover:bg-gray-100 transition-colors">İptal</button>
+                    </div>
+                </div>
+
+                <div id="q-list" class="flex flex-col gap-5"></div>
+            </div>
+
+            <div id="section-criteria" class="section max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Sonuç Kriterleri</h1>
+                        <p class="text-sm text-gray-500 mt-1">Puan aralıklarına göre gösterilecek profilleri ayarla.</p>
+                    </div>
+                    <div class="flex items-center gap-3 bg-white p-2 rounded-xl border border-gray-200 shadow-sm w-full md:w-auto">
+                        <select id="quiz-sel-crit" onchange="loadCriteria(this.value)" class="bg-gray-50 border-none rounded-lg text-sm px-3 py-2 outline-none cursor-pointer flex-1 font-semibold text-gray-700 focus:ring-2 focus:ring-brand-100">
+                            <option value="">Önce test seçin...</option>
+                        </select>
+                        <button onclick="toggleAddCritForm()" class="bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white font-bold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">
+                            + Kriter Ekle
+                        </button>
+                    </div>
+                </div>
+
+                <div id="add-crit-form" class="hidden bg-white border border-brand-200 rounded-2xl p-6 mb-8 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-brand-600"></div>
+                    <h3 class="font-bold text-gray-900 mb-5 text-lg">Yeni Kriter</h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Profil Adı</label>
+                            <input type="text" id="crit-title" placeholder="Örn: Stratejik Lider" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-500 font-medium text-gray-900">
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="flex-1">
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Min Puan</label>
+                                <input type="number" id="crit-min" placeholder="0" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-500 text-brand-600 font-bold text-center">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Max Puan</label>
+                                <input type="number" id="crit-max" placeholder="40" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-500 text-brand-600 font-bold text-center">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Görsel URL (İsteğe Bağlı)</label>
+                        <input type="text" id="crit-img" placeholder="https://..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-500">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Detaylı Açıklama</label>
+                        <textarea id="crit-desc" placeholder="Bu profile sahip olan kişi genellikle..." rows="3" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-500 resize-y"></textarea>
+                    </div>
+
+                    <div class="flex items-center gap-3 pt-6 border-t border-gray-100">
+                        <button onclick="saveCriteria()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-3 rounded-xl transition-colors shadow-md">Kriteri Kaydet</button>
+                        <button onclick="toggleAddCritForm()" class="px-6 py-3 rounded-xl text-gray-600 font-bold hover:bg-gray-100 transition-colors">İptal</button>
+                    </div>
+                </div>
+
+                <div id="crit-list" class="flex flex-col gap-5"></div>
+            </div>
+
+            <div id="section-settings" class="section max-w-2xl mx-auto">
+                <h1 class="text-2xl font-bold text-gray-900 mb-8">Sistem Durumu</h1>
+
+                <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                    <h3 class="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-4">Veritabanı Bağlantısı</h3>
+                    <div class="flex items-center gap-3 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                        <div id="db-status" class="w-3 h-3 rounded-full bg-gray-300"></div>
+                        <span id="db-status-text" class="text-sm font-semibold text-gray-600">Bağlantı kontrol ediliyor...</span>
+                    </div>
+                    <button onclick="testDb()" class="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-bold px-5 py-2.5 rounded-xl transition-colors text-sm shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Bağlantıyı Test Et
+                    </button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-20 opacity-0 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl text-sm font-bold z-[9999] flex items-center gap-3 pointer-events-none transition-all duration-300">
+        <span id="toast-icon" class="text-lg"></span> <span id="toast-text"></span>
+    </div>
+
+    <script>
+        let activeQuizId = null;
+        let allQuizzes = [];
+        let isEditing = false;
+        let editingId = null;
+        let optCount = 0;
+
+        window.onload = async () => {
+            await loadQuizzes();
+            testDb();
+        };
+
+        function switchSection(id, btnElement) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.side-item').forEach(b => {
+                b.classList.remove('active', 'bg-brand-50', 'text-brand-700', 'border-brand-100');
+                b.classList.add('text-gray-600', 'border-transparent');
+            });
+            document.getElementById('section-' + id).classList.add('active');
+
+            btnElement.classList.add('active', 'bg-brand-50', 'text-brand-700', 'border-brand-100');
+            btnElement.classList.remove('text-gray-600', 'border-transparent');
+        }
+
+        function showToast(msg, type = 'success') {
+            const el = document.getElementById('toast');
+            document.getElementById('toast-text').textContent = msg;
+            document.getElementById('toast-icon').textContent = type === 'success' ? '✓' : '⚠️';
+            el.className = `fixed bottom-6 left-1/2 -translate-x-1/2 opacity-100 translate-y-0 text-white px-6 py-3 rounded-xl shadow-2xl text-sm font-bold z-[9999] flex items-center gap-3 transition-all duration-300 ${type === 'success' ? 'bg-green-600' : 'bg-brand-600'}`;
+            setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translate(-50%, 20px)'; }, 3000);
+        }
+
+        function escHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        async function loadQuizzes() {
+            try {
+                const res = await fetch('/api/admin/quizzes');
+                if (!res.ok) return;
+                allQuizzes = await res.json();
+
+                ['quiz-sel', 'quiz-sel-crit'].forEach(id => {
+                    const sel = document.getElementById(id);
+                    sel.innerHTML = '<option value="">Önce test seçin...</option>';
+                    allQuizzes.forEach(q => sel.innerHTML += `<option value="${q.id}">${escHtml(q.title)}</option>`);
+                });
+
+                const list = document.getElementById('admin-quiz-list');
+                if (list) {
+                    list.innerHTML = allQuizzes.map(q => `
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col border-t-4 border-t-brand-500 relative">
+                                <button onclick="deleteQuiz('${q.id}')" class="absolute top-4 right-4 text-gray-400 hover:text-brand-600 transition-colors p-1" title="Testi Sil">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                                <h3 class="font-bold text-gray-900 text-lg mb-1 pr-8">${escHtml(q.title)}</h3>
+                                <p class="text-xs text-gray-400 font-mono mb-5 break-all">${q.id}</p>
+                                <div class="mt-auto flex gap-3">
+                                    <button onclick="document.getElementById('quiz-sel').value='${q.id}'; switchSection('questions', document.querySelectorAll('.side-item')[1]); loadQuestions('${q.id}');" class="flex-1 bg-brand-50 text-brand-700 text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-brand-600 hover:text-white transition-colors text-center border border-brand-100 hover:border-brand-600">Sorular</button>
+                                    <button onclick="document.getElementById('quiz-sel-crit').value='${q.id}'; switchSection('criteria', document.querySelectorAll('.side-item')[2]); loadCriteria('${q.id}');" class="flex-1 bg-gray-50 text-gray-700 border border-gray-200 text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-center">Kriterler</button>
+                                </div>
+                            </div>
+                        `).join('');
+                }
+            } catch (e) { showToast('Test listesi yüklenemedi', 'error'); }
+        }
+
+        async function saveNewQuiz() {
+            const titleInput = document.getElementById('new-quiz-title');
+            const title = titleInput.value.trim();
+            if (!title) { showToast('Test adı boş olamaz', 'error'); return; }
+
+            try {
+                const res = await fetch('/api/admin/add-quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Title: title })
+                });
+                if (!res.ok) throw new Error('Kaydedilemedi');
+                showToast('Yeni test oluşturuldu ✓');
+                titleInput.value = '';
+                loadQuizzes();
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function deleteQuiz(id) {
+            if (!confirm("DİKKAT! Bu testi ve içindeki TÜM SORULARI, ŞIKLARI ve SONUÇ KRİTERLERİNİ silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) return;
+
+            try {
+                const res = await fetch(`/api/admin/delete-quiz/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Silinemedi');
+
+                showToast("Test başarıyla silindi ✓", "success");
+                loadQuizzes();
+
+                if (activeQuizId === id) {
+                    activeQuizId = null;
+                    document.getElementById('q-list').innerHTML = '';
+                    document.getElementById('crit-list').innerHTML = '';
+                }
+            } catch (e) {
+                showToast("Test silinirken hata oluştu", "error");
+            }
+        }
+
+        async function loadQuestions(quizId) {
+            activeQuizId = quizId;
+            const list = document.getElementById('q-list');
+            if (!quizId) { list.innerHTML = ''; return; }
+            list.innerHTML = `<div class="text-center py-10 text-gray-400 font-semibold">Sorular yükleniyor...</div>`;
+
+            try {
+                const res = await fetch(`/api/quiz-data/${quizId}`);
+                if (!res.ok) throw new Error('Yüklenemedi');
+                const rows = await res.json();
+
+                const map = {};
+                rows.forEach(r => {
+                    if (!map[r.questionid]) map[r.questionid] = { id: r.questionid, text: r.questiontext, options: [] };
+                    if (r.optionid) map[r.questionid].options.push({ id: r.optionid, text: r.optiontext, score: r.score });
+                });
+                const questions = Object.values(map);
+
+                if (!questions.length) {
+                    list.innerHTML = `<div class="bg-white border border-dashed border-gray-300 rounded-3xl p-10 text-center shadow-sm"><div class="text-5xl mb-4">📝</div><h3 class="font-bold text-gray-900 text-xl mb-2">Soru Bulunamadı</h3><p class="text-gray-500 mb-6">Bu teste henüz soru eklenmemiş.</p><button onclick="toggleAddQForm()" class="bg-brand-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-brand-700 shadow-md">İlk Soruyu Ekle</button></div>`;
+                    return;
+                }
+
+                const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                list.innerHTML = questions.map((q, qi) => `
+                        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow" id="q-${q.id}">
+                            <div class="bg-gray-50 border-b border-gray-200 p-5 flex gap-4 items-center">
+                                <div class="w-10 h-10 rounded-xl bg-brand-600 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-sm">${qi + 1}</div>
+                                <input value="${escHtml(q.text)}" id="q-text-${q.id}" class="flex-1 bg-transparent border-none text-gray-900 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white rounded-lg px-3 py-2 transition-all" readonly />
+                                <button onclick="editQuestion('${q.id}')" class="text-sm font-bold text-gray-700 bg-white border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">Düzenle</button>
+                                <button onclick="deleteQuestion('${q.id}')" class="text-sm font-bold text-brand-600 bg-brand-50 border border-brand-100 px-4 py-2 rounded-xl hover:bg-brand-100 transition-colors">Sil</button>
+                            </div>
+                            <div class="p-5 bg-white grid md:grid-cols-2 gap-4">
+                                ${q.options.map((o, oi) => `
+                                    <div class="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-2 pl-3">
+                                        <span class="text-xs font-black text-brand-700 bg-brand-100 w-7 h-7 rounded-lg flex items-center justify-center shrink-0">${letters[oi] || oi + 1}</span>
+                                        <input type="text" class="opt-text-input flex-1 bg-transparent border-none text-sm text-gray-800 font-medium outline-none truncate pointer-events-none" value="${escHtml(o.text)}" />
+                                        <input type="number" class="opt-score-input w-12 text-center bg-white border border-gray-200 rounded-lg text-sm font-black text-brand-600 py-1.5 outline-none pointer-events-none shadow-sm" value="${o.score}" />
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('');
+            } catch (e) { list.innerHTML = `<div class="text-brand-600 bg-brand-50 border border-brand-200 rounded-xl p-6 text-center font-semibold">⚠️ Yüklenemedi: ${e.message}</div>`; }
+        }
+
+        function toggleAddQForm() {
+            if (!activeQuizId) { showToast('Üstten bir test seçin', 'error'); return; }
+            const form = document.getElementById('add-q-form');
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+                document.getElementById('form-q-title').textContent = "Yeni Soru";
+                document.getElementById('new-q-text').value = '';
+                document.getElementById('new-opts-list').innerHTML = '';
+                document.getElementById('save-btn').textContent = "Soruyu Kaydet";
+                isEditing = false;
+                editingId = null;
+                optCount = 0;
+                for (let i = 0; i < 4; i++) addOptField();
+            } else {
+                form.classList.add('hidden');
+            }
+        }
+
+        function addOptField() {
+            const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+            const i = optCount++;
+            const div = document.createElement('div');
+            div.className = 'opt-row flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-2 pl-3';
+            div.innerHTML = `
+                    <span class="text-xs font-black text-gray-500 w-7 h-7 rounded-lg bg-gray-200 flex items-center justify-center shrink-0">${letters[i] || i + 1}</span>
+                    <input class="opt-text-input flex-1 bg-transparent border-none text-sm text-gray-900 focus:outline-none placeholder-gray-400 font-semibold" placeholder="Şık metnini yazın..." id="opt-text-${i}" />
+                    <input class="opt-score-input w-16 text-center bg-white border border-gray-200 rounded-lg text-sm font-black text-brand-600 py-2 focus:border-brand-500 outline-none shadow-sm" type="number" placeholder="Puan" id="opt-score-${i}" value="${i + 1}" />
+                    <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-brand-600 px-3 font-bold text-lg shrink-0">✕</button>
+                `;
+            document.getElementById('new-opts-list').appendChild(div);
+        }
+
+        function editQuestion(id) {
+            isEditing = true;
+            editingId = id;
+
+            const qCard = document.getElementById(`q-${id}`);
+            const qText = document.getElementById(`q-text-${id}`).value;
+            const optTexts = qCard.querySelectorAll('.opt-text-input');
+            const optScores = qCard.querySelectorAll('.opt-score-input');
+
+            const form = document.getElementById('add-q-form');
+            form.classList.remove('hidden');
+            document.getElementById('form-q-title').textContent = "Soruyu Düzenle";
+            document.getElementById('new-q-text').value = qText;
+
+            const optList = document.getElementById('new-opts-list');
+            optList.innerHTML = '';
+            optCount = 0;
+
+            optTexts.forEach((input, index) => {
+                addOptField();
+                document.getElementById(`opt-text-${index}`).value = input.value;
+                document.getElementById(`opt-score-${index}`).value = optScores[index].value;
+            });
+
+            document.getElementById('save-btn').textContent = "Değişiklikleri Güncelle";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function saveNewQuestion() {
+            if (!activeQuizId) return;
+            const text = document.getElementById('new-q-text').value.trim();
+            if (!text) { showToast('Soru metnini gir', 'error'); return; }
+
+            const optsList = document.getElementById('new-opts-list').querySelectorAll('.opt-row');
+            const options = [];
+            optsList.forEach((row, i) => {
+                const optText = row.querySelector('.opt-text-input').value.trim();
+                const optScore = parseInt(row.querySelector('.opt-score-input').value) || 0;
+                if (optText) options.push({ Text: optText, Score: optScore });
+            });
+
+            const saveBtn = document.getElementById('save-btn');
+            const origText = saveBtn.textContent;
+            saveBtn.textContent = "Kaydediliyor..."; saveBtn.disabled = true;
+
+            try {
+                if (isEditing) {
+                    const res = await fetch('/api/admin/update-question', {
+                        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ Id: editingId, Text: text, Options: options })
+                    });
+                    if (!res.ok) throw new Error('Güncellenemedi');
+                    showToast("Güncellendi ✓");
+                } else {
+                    const qRes = await fetch('/api/admin/add-question', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ QuizId: activeQuizId, Text: text, OrderNum: 1 })
+                    });
+                    if (!qRes.ok) throw new Error('Soru kaydedilemedi');
+                    const { id: questionId } = await qRes.json();
+
+                    for (let opt of options) {
+                        await fetch('/api/admin/add-option', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ Questionid: questionId, Text: opt.Text, Score: opt.Score })
+                        });
+                    }
+                    showToast('Soru eklendi ✓');
+                }
+                document.getElementById('add-q-form').classList.add('hidden');
+                loadQuestions(activeQuizId);
+            } catch (e) { showToast(e.message, 'error'); }
+            finally { saveBtn.textContent = origText; saveBtn.disabled = false; }
+        }
+
+        async function deleteQuestion(id) {
+            if (!confirm("Soruyu silmek istiyor musun?")) return;
+            try {
+                const res = await fetch(`/api/admin/delete-question/${id}`, { method: 'DELETE' });
+                if (res.ok) { showToast("Silindi"); loadQuestions(activeQuizId); }
+            } catch (e) { showToast("Hata", 'error'); }
+        }
+
+        async function loadCriteria(quizId) {
+            const list = document.getElementById('crit-list');
+            if (!quizId) { list.innerHTML = ''; return; }
+            list.innerHTML = `<div class="text-center py-10 text-gray-400 font-semibold">Kriterler yükleniyor...</div>`;
+            try {
+                const res = await fetch(`/api/admin/results/${quizId}`);
+                const data = await res.json();
+                if (!data.length) {
+                    list.innerHTML = `<div class="bg-white border border-dashed border-gray-300 rounded-3xl p-10 text-center shadow-sm"><div class="text-5xl mb-4">🏆</div><h3 class="font-bold text-gray-900 text-xl mb-2">Kriter Bulunamadı</h3><p class="text-gray-500 mb-6">Puan aralıkları belirleyerek sonuç ekranı oluştur.</p></div>`;
+                    return;
+                }
+                list.innerHTML = '';
+                data.forEach(c => renderCriteriaCard(c));
+            } catch { list.innerHTML = `<div class="text-brand-600 bg-brand-50 rounded-xl p-6 text-center font-bold">Yükleme hatası</div>`; }
+        }
+
+        function toggleAddCritForm() {
+            if (!document.getElementById('quiz-sel-crit').value) { showToast('Üstten test seç', 'error'); return; }
+            document.getElementById('add-crit-form').classList.toggle('hidden');
+        }
+
+        async function saveCriteria() {
+            const quizId = document.getElementById('quiz-sel-crit').value;
+            const title = document.getElementById('crit-title').value.trim();
+            const min = document.getElementById('crit-min').value;
+            const max = document.getElementById('crit-max').value;
+            const desc = document.getElementById('crit-desc').value.trim();
+            const img = document.getElementById('crit-img').value.trim();
+
+            if (!title || !min || !max) { showToast('Gerekli alanları doldur', 'error'); return; }
+
+            try {
+                await fetch('/api/admin/add-result', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ QuizId: quizId, MinScore: parseInt(min), MaxScore: parseInt(max), Title: title, Description: desc, ImageUrl: img })
+                });
+                showToast('Kriter kaydedildi');
+                document.getElementById('add-crit-form').classList.add('hidden');
+                loadCriteria(quizId);
+            } catch (e) { showToast('Hata', 'error'); }
+        }
+
+        function renderCriteriaCard(c) {
+            const list = document.getElementById('crit-list');
+            const card = document.createElement('div');
+            card.className = "bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col sm:flex-row hover:shadow-md transition-shadow";
+            card.innerHTML = `
+                    <div class="p-6 flex-1 border-b sm:border-b-0 sm:border-r border-gray-100 flex flex-col justify-center">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="bg-brand-50 border border-brand-100 text-brand-700 font-black text-xs px-3 py-1.5 rounded-lg">${c.minscore} - ${c.maxscore} PUAN</span>
+                            <h4 class="font-bold text-gray-900 text-xl">${escHtml(c.title)}</h4>
+                        </div>
+                        <p class="text-sm text-gray-500 leading-relaxed font-medium">${escHtml(c.description || 'Açıklama yok')}</p>
+                    </div>
+                    <div class="p-5 sm:w-56 bg-gray-50 flex flex-col items-center justify-center shrink-0">
+                        ${c.imageurl ? `<img src="${escHtml(c.imageurl)}" class="w-24 h-24 object-cover rounded-2xl border-4 border-white shadow-md mb-4">` : `<div class="text-5xl mb-4">🏆</div>`}
+                        <button onclick="deleteCriteria('${c.id}')" class="text-sm font-bold text-brand-600 hover:bg-brand-100 bg-white border border-brand-200 px-4 py-2 rounded-xl w-full transition-colors shadow-sm">Kaldır</button>
+                    </div>
+                `;
+            list.appendChild(card);
+        }
+
+        async function deleteCriteria(id) {
+            if (!confirm("Silmek istediğine emin misin?")) return;
+            await fetch(`/api/admin/delete-result/${id}`, { method: 'DELETE' });
+            showToast('Silindi');
+            loadCriteria(document.getElementById('quiz-sel-crit').value);
+        }
+
+        async function testDb() {
+            const dot = document.getElementById('db-status');
+            const txt = document.getElementById('db-status-text');
+            dot.className = 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
+            txt.textContent = 'Bağlantı test ediliyor...';
+            try {
+                const res = await fetch('/api/test-db');
+                if (res.ok) { dot.className = 'w-3 h-3 rounded-full bg-green-500 shadow-sm'; txt.textContent = 'Supabase PostgreSQL Aktif'; }
+                else throw new Error();
+            } catch { dot.className = 'w-3 h-3 rounded-full bg-brand-600 shadow-sm'; txt.textContent = 'Bağlantı Hatası!'; }
+        }
+    </script>
+</body>
+</html>

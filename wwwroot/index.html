@@ -1,0 +1,330 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSD Test Merkezi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#fdf2f2', 100: '#fce8e8', 500: '#ef4444', 600: '#C60018', 700: '#a30014' }
+                    },
+                    animation: { 'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both' },
+                    keyframes: {
+                        shake: { '10%, 90%': { transform: 'translate3d(-2px, 0, 0)' }, '20%, 80%': { transform: 'translate3d(4px, 0, 0)' }, '30%, 50%, 70%': { transform: 'translate3d(-6px, 0, 0)' }, '40%, 60%': { transform: 'translate3d(6px, 0, 0)' } }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .screen {
+            display: none;
+        }
+
+            .screen.active {
+                display: flex;
+            }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col font-sans selection:bg-brand-100 selection:text-brand-700">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.reload()">
+                <img src="hsd-logo (1).png" alt="HSD Logo" class="h-8 object-contain">
+            </div>
+            <span class="text-xs font-bold bg-brand-50 text-brand-600 px-3 py-1 rounded-full uppercase tracking-wider border border-brand-100">Test Merkezi</span>
+        </div>
+    </nav>
+
+    <main class="flex-1 flex flex-col w-full max-w-4xl mx-auto p-4 sm:p-6">
+
+        <!-- LOADING -->
+        <div id="screen-loading" class="screen active flex-1 items-center justify-center flex-col gap-4">
+            <div class="w-12 h-12 border-4 border-brand-100 border-t-brand-600 rounded-full animate-spin"></div>
+            <p class="text-gray-500 font-medium">Yükleniyor...</p>
+        </div>
+
+        <!-- HOME -->
+        <div id="screen-home" class="screen flex-1 flex-col py-10">
+            <div class="text-center mb-12">
+                <h1 class="text-3xl sm:text-5xl font-bold text-gray-900 mb-4 tracking-tight">Kendini <span class="text-brand-600">Keşfet</span></h1>
+                <p class="text-gray-500 max-w-lg mx-auto text-lg">HSD kültürüne ve profesyonel hayata dair yeteneklerini ölç, hangi profile daha yakın olduğunu hemen öğren.</p>
+            </div>
+            <div id="quiz-list-container" class="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto w-full">
+                <!-- Testler buraya JS ile yüklenecek -->
+            </div>
+        </div>
+
+        <!-- QUIZ -->
+        <div id="screen-quiz" class="screen flex-1 flex-col max-w-2xl mx-auto w-full py-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-semibold text-gray-400 uppercase tracking-wider" id="progress-label">Soru 1 / 10</span>
+                <span class="text-sm font-bold text-brand-600" id="progress-pct">10%</span>
+            </div>
+            <div class="w-full h-2 bg-gray-200 rounded-full mb-8 overflow-hidden">
+                <div class="h-full bg-brand-600 rounded-full transition-all duration-500 ease-out" id="progress-fill" style="width:10%"></div>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 mb-6 shadow-md border-t-4 border-t-brand-600">
+                <h2 class="text-xs font-bold text-gray-400 tracking-wider uppercase mb-3" id="q-eyebrow">SORU 1</h2>
+                <p class="text-xl sm:text-2xl font-semibold text-gray-900 leading-snug" id="q-text">Soru metni</p>
+            </div>
+
+            <div class="flex flex-col gap-3 mb-8" id="options-list"></div>
+
+            <div class="flex items-center justify-between mt-auto">
+                <button id="btn-prev" onclick="prevQ()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-40 shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                    Önceki
+                </button>
+                <div class="flex gap-2 hide-scrollbar overflow-x-auto px-2" id="dot-row"></div>
+                <button id="btn-next" onclick="nextQ()" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors shadow-md">
+                    Sonraki
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- RESULT -->
+        <div id="screen-result" class="screen flex-1 flex-col items-center justify-center py-8">
+            <div class="bg-white border border-gray-200 rounded-3xl p-8 sm:p-10 w-full max-w-xl text-center shadow-lg relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-brand-600"></div>
+
+                <div class="w-28 h-28 mx-auto bg-brand-50 rounded-2xl flex items-center justify-center mb-6 overflow-hidden border border-brand-100 shadow-inner" id="result-img-wrap">
+                    <span class="text-5xl">🏆</span>
+                </div>
+
+                <div class="inline-flex flex-col items-center justify-center w-24 h-24 rounded-full border-4 border-brand-600 bg-white shadow-md mb-4 -mt-10 relative z-10">
+                    <span class="text-3xl font-bold text-brand-600 leading-none" id="result-score-num">0</span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mt-1">PUAN</span>
+                </div>
+
+                <h2 class="text-3xl font-bold text-gray-900 mb-3" id="result-title">Sonuç</h2>
+                <p class="text-gray-500 text-base leading-relaxed mb-8 max-w-sm mx-auto" id="result-desc">Açıklama</p>
+
+                <div class="grid grid-cols-2 gap-4 text-left mb-8" id="result-stats"></div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="restartApp()" class="flex-1 py-3 px-4 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Başka Test Çöz
+                    </button>
+                    <button onclick="window.location.reload()" class="flex-1 py-3 px-4 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors shadow-md">
+                        Ana Sayfaya Dön
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ERROR -->
+        <div id="screen-error" class="screen flex-1 flex-col items-center justify-center text-center py-10">
+            <div class="text-6xl mb-4">⚠️</div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Bir sorun oluştu</h2>
+            <p class="text-gray-500 mb-6" id="error-msg">Veriler yüklenemedi.</p>
+            <button onclick="init()" class="bg-brand-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-brand-700 shadow-md">Tekrar Dene</button>
+        </div>
+
+    </main>
+
+    <script>
+        let allQuizzes = [];
+        let activeQuiz = null;
+        let questions = [];
+        let answers = {};
+        let cur = 0;
+
+        function show(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + id).classList.add('active');
+        }
+
+        async function init() {
+            show('loading');
+            try {
+                const res = await fetch('/api/admin/quizzes');
+                if (!res.ok) throw new Error('Testler çekilemedi');
+                allQuizzes = await res.json();
+
+                if (allQuizzes.length === 0) {
+                    throw new Error("Henüz sisteme eklenmiş bir test yok.");
+                }
+
+                renderHome();
+                show('home');
+            } catch (err) {
+                document.getElementById('error-msg').textContent = err.message;
+                show('error');
+            }
+        }
+
+        function renderHome() {
+            const container = document.getElementById('quiz-list-container');
+            container.innerHTML = allQuizzes.map(q => `
+        <div onclick="startQuiz('${q.id}', this.getAttribute('data-title'))" data-title="${escHtml(q.title)}" class="group cursor-pointer bg-white border border-gray-200 rounded-2xl p-6 hover:border-brand-300 hover:shadow-lg transition-all text-left flex flex-col relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-brand-50 rounded-bl-full -mr-4 -mt-4 z-0 transition-transform group-hover:scale-110"></div>
+            <div class="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center mb-5 text-brand-600 group-hover:bg-brand-600 group-hover:text-white transition-colors relative z-10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+            </div>
+            <h3 class="font-bold text-gray-900 text-xl mb-2 relative z-10">${escHtml(q.title)}</h3>
+            <p class="text-sm text-gray-500 mt-auto flex items-center gap-2 font-semibold group-hover:text-brand-600 transition-colors relative z-10 pt-4">
+                TESTE BAŞLA <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </p>
+        </div>
+    `).join('');
+        }
+
+        async function startQuiz(quizId, title) {
+            show('loading');
+            activeQuiz = { id: quizId, title: title };
+            try {
+                const res = await fetch(`/api/quiz-data/${quizId}`);
+                if (!res.ok) throw new Error('Sorular yüklenemedi');
+                const rows = await res.json();
+
+                const map = {};
+                rows.forEach(row => {
+                    if (!map[row.questionid]) map[row.questionid] = { id: row.questionid, text: row.questiontext, options: [] };
+                    if (row.optionid) map[row.questionid].options.push({ id: row.optionid, text: row.optiontext, score: row.score });
+                });
+                questions = Object.values(map);
+
+                if (questions.length === 0) throw new Error('Bu teste henüz soru eklenmemiş.');
+
+                answers = {};
+                cur = 0;
+                renderQ();
+                show('quiz');
+            } catch (err) {
+                document.getElementById('error-msg').textContent = err.message;
+                show('error');
+            }
+        }
+
+        function renderQ() {
+            const total = questions.length;
+            const pct = Math.round(((cur + 1) / total) * 100);
+            const q = questions[cur];
+
+            document.getElementById('progress-label').textContent = `Soru ${cur + 1} / ${total}`;
+            document.getElementById('progress-pct').textContent = pct + '%';
+            document.getElementById('progress-fill').style.width = pct + '%';
+            document.getElementById('q-eyebrow').textContent = `SORU ${cur + 1}`;
+            document.getElementById('q-text').textContent = q.text;
+
+            const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+            const list = document.getElementById('options-list');
+            list.innerHTML = q.options.map((o, i) => {
+                const isSelected = answers[cur] === o.score;
+                return `
+                    <button onclick="selectOpt(${o.score}, this, ${i})"
+                            class="w-full text-left p-5 rounded-2xl border-2 transition-all flex items-center gap-4 group shadow-sm
+                            ${isSelected ? 'border-brand-600 bg-brand-50 text-brand-900' : 'border-gray-200 bg-white hover:border-brand-300 hover:shadow-md text-gray-700'}">
+                        <span class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0 transition-colors
+                            ${isSelected ? 'bg-brand-600 text-white shadow-md' : 'bg-gray-100 text-gray-500 group-hover:bg-brand-100 group-hover:text-brand-700'}">
+                            ${letters[i] || i + 1}
+                        </span>
+                        <span class="font-medium text-lg">${escHtml(o.text)}</span>
+                    </button>
+                `}).join('');
+
+            document.getElementById('btn-prev').disabled = cur === 0;
+            const nextBtn = document.getElementById('btn-next');
+            nextBtn.innerHTML = cur === total - 1
+                ? 'Sonucu Gör <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>'
+                : 'Sonraki <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>';
+
+            document.getElementById('dot-row').innerHTML = questions.map((_, i) => `
+                    <div onclick="goToQ(${i})" class="h-2.5 rounded-full cursor-pointer transition-all duration-300
+                        ${i === cur ? 'w-8 bg-brand-600' : answers[i] !== undefined ? 'w-2.5 bg-brand-300 hover:bg-brand-400' : 'w-2.5 bg-gray-200 hover:bg-gray-300'}">
+                    </div>
+                `).join('');
+        }
+
+        function selectOpt(score, btn, idx) {
+            answers[cur] = score;
+            renderQ();
+            setTimeout(() => { if (cur < questions.length - 1) nextQ(); }, 350);
+        }
+
+        function nextQ() {
+            if (answers[cur] === undefined) {
+                const card = document.querySelector('.bg-white.border.rounded-2xl');
+                card.classList.remove('animate-shake');
+                void card.offsetWidth;
+                card.classList.add('animate-shake');
+                return;
+            }
+            if (cur < questions.length - 1) { cur++; renderQ(); }
+            else { showResult(); }
+        }
+
+        function prevQ() { if (cur > 0) { cur--; renderQ(); } }
+        function goToQ(i) { cur = i; renderQ(); }
+
+        async function showResult() {
+            show('loading');
+            const totalScore = Object.values(answers).reduce((s, v) => s + v, 0);
+
+            try {
+                const res = await fetch(`/api/result-by-score?quizId=${activeQuiz.id}&score=${totalScore}`);
+                if (!res.ok) throw new Error('Sonuç kriteri bulunamadı. Lütfen admin panelinden bu test için sonuç kriterleri ekleyin.');
+                const data = await res.json();
+
+                document.getElementById('result-score-num').textContent = totalScore;
+                document.getElementById('result-title').textContent = data.title || 'Harika!';
+                document.getElementById('result-desc').textContent = data.description || '';
+
+                const imgWrap = document.getElementById('result-img-wrap');
+                if (data.imageurl) {
+                    imgWrap.innerHTML = `<img src="${data.imageurl}" alt="${data.title}" class="w-full h-full object-cover" />`;
+                }
+
+                document.getElementById('result-stats').innerHTML = `
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <div class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Toplam Puan</div>
+                            <div class="text-xl font-black text-brand-600">${totalScore}</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <div class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Cevaplanan</div>
+                            <div class="text-xl font-black text-gray-900">${Object.keys(answers).length} / ${questions.length}</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-4 col-span-2 border border-gray-100">
+                            <div class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Çözülen Test</div>
+                            <div class="text-base font-bold text-gray-900 truncate">${activeQuiz.title}</div>
+                        </div>
+                    `;
+                show('result');
+            } catch (err) {
+                document.getElementById('error-msg').textContent = err.message;
+                show('error');
+            }
+        }
+
+        function restartApp() {
+            activeQuiz = null;
+            show('home');
+        }
+
+        // KESME İŞARETİ HATASINI ÇÖZEN KISIM:
+        function escHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        init();
+    </script>
+</body>
+</html>
