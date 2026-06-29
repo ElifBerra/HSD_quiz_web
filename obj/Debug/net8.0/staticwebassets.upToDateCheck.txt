@@ -1,4 +1,0 @@
-wwwroot\admin.html
-wwwroot\hsd-logo (1).png
-wwwroot\hsd-logo-white.png
-wwwroot\index.html
