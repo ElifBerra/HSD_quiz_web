@@ -34,15 +34,15 @@ Dapper
 #### Deployment: 
 Railway.app & Vercel
 
-
-# Ana sayfa
+# 📷 Ekran Görüntüleri
+## Ana sayfa
 <img width="1919" height="940" alt="image" src="https://github.com/user-attachments/assets/db58309a-3da5-419c-968d-27f6411b8539" />
 <img width="1919" height="939" alt="image" src="https://github.com/user-attachments/assets/ebba55bf-fdd6-4674-8f3a-8cc21c434262" />
 <img width="1919" height="943" alt="image" src="https://github.com/user-attachments/assets/2eaa87c4-df2e-4961-9993-992530d529ec" />
 <img width="1919" height="939" alt="image" src="https://github.com/user-attachments/assets/fc223338-b043-4969-9807-220ce90b5922" />
 <img width="1898" height="943" alt="image" src="https://github.com/user-attachments/assets/b016233a-dea2-4066-a4bf-850390e3d7b2" />
 
-# Admin paneli
+## Admin paneli
 <img width="1919" height="943" alt="image" src="https://github.com/user-attachments/assets/391d8af9-a5f9-42a9-b1e5-0ce20caed4d6" />
 <img width="1901" height="942" alt="image" src="https://github.com/user-attachments/assets/e5dd7c5f-fc46-464f-ab1b-8652c615750a" />
 <img width="1898" height="943" alt="image" src="https://github.com/user-attachments/assets/b3205a57-8165-4a5a-9631-d7ad450f0463" />
