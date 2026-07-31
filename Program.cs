@@ -3,11 +3,10 @@ using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Güvenli bağlantı dizesi: Önce yapılandırmaya (appsettings), yoksa ortam değişkenine bakar
-string connStr = builder.Configuration.GetConnectionString("DefaultConnection") 
-                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-                 ?? throw new InvalidOperationException("Veritabanı bağlantı dizesi bulunamadı!");
-
+// Önce Render Environment Variables'a bakar, bulamazsa appsettings'e bakar
+string connStr = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
+                 ?? builder.Configuration.GetConnectionString("DefaultConnection") 
+                 ?? throw new InvalidOperationException("Bağlantı dizesi bulunamadı!");
 var app = builder.Build();
 
 // 1. Baðlantý Testi
