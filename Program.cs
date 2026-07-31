@@ -2,17 +2,21 @@ using Dapper;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// G√ºvenli baƒülantƒ± dizesi: √ñnce yapƒ±landƒ±rmaya (appsettings), yoksa ortam deƒüi≈ükenine bakar
+string connStr = builder.Configuration.GetConnectionString("DefaultConnection") 
+                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                 ?? throw new InvalidOperationException("Veritabanƒ± baƒülantƒ± dizesi bulunamadƒ±!");
+
 var app = builder.Build();
 
-string connStr = "Host=aws-1-eu-central-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.fclorbthrtwonsqrehvt;Password=hsd-quiz-web-2026!?";
-
-// 1. Balant˝ Testi
+// 1. Ba√∞lant√Ω Testi
 app.MapGet("/api/test-db", async () => {
     using var conn = new NpgsqlConnection(connStr);
     return await conn.QueryAsync("SELECT title FROM quizzes");
 });
 
-// 2. T¸m ili˛kileri (Soru + ﬁ˝k) tek seferde getir
+// 2. T√ºm ili√ækileri (Soru + √û√Ωk) tek seferde getir
 app.MapGet("/api/quiz-data/{quizId}", async (Guid quizId) => {
     using var conn = new NpgsqlConnection(connStr);
     var sql = @"
@@ -25,7 +29,7 @@ app.MapGet("/api/quiz-data/{quizId}", async (Guid quizId) => {
     return Results.Ok(result);
 });
 
-// 3. Sonucu puana gˆre getir
+// 3. Sonucu puana g√∂re getir
 app.MapGet("/api/result-by-score", async (Guid quizId, int score) => {
     using var conn = new NpgsqlConnection(connStr);
     var result = await conn.QueryFirstOrDefaultAsync(
@@ -35,7 +39,7 @@ app.MapGet("/api/result-by-score", async (Guid quizId, int score) => {
     return Results.Ok(result);
 });
 
-// 4. T¸m quizleri listele (Admin)
+// 4. T√ºm quizleri listele (Admin)
 app.MapGet("/api/admin/quizzes", async () => {
     using var conn = new NpgsqlConnection(connStr);
     return await conn.QueryAsync("SELECT id, title FROM quizzes");
@@ -50,7 +54,7 @@ app.MapPost("/api/admin/add-question", async (QuestionRequest req) => {
     return Results.Ok(new { id });
 });
 
-// 6. ﬁ˝k ekle (Admin)
+// 6. √û√Ωk ekle (Admin)
 app.MapPost("/api/admin/add-option", async (OptionRequest req) => {
     using var conn = new NpgsqlConnection(connStr);
     await conn.ExecuteAsync(
@@ -59,7 +63,7 @@ app.MapPost("/api/admin/add-option", async (OptionRequest req) => {
     return Results.Ok();
 });
 
-// 6b. ﬁ˝k g¸ncelle (Admin)
+// 6b. √û√Ωk g√ºncelle (Admin)
 app.MapPut("/api/admin/update-option", async ([Microsoft.AspNetCore.Mvc.FromBody] OptionUpdate req) => {
     try
     {
@@ -71,19 +75,19 @@ app.MapPut("/api/admin/update-option", async ([Microsoft.AspNetCore.Mvc.FromBody
     }
     catch (Exception ex)
     {
-        Console.WriteLine("Option Update Hatas˝: " + ex.Message);
+        Console.WriteLine("Option Update Hatas√Ω: " + ex.Message);
         return Results.Problem(ex.Message);
     }
 });
 
-// 6c. ﬁ˝k sil (Admin)
+// 6c. √û√Ωk sil (Admin)
 app.MapDelete("/api/admin/delete-option/{id}", async (Guid id) => {
     using var conn = new NpgsqlConnection(connStr);
     await conn.ExecuteAsync("DELETE FROM options WHERE id = @id", new { id });
     return Results.Ok();
 });
 
-// 7. SonuÁ kriteri ekle (Admin)
+// 7. Sonu√ß kriteri ekle (Admin)
 app.MapPost("/api/admin/add-result", async (ResultRequest req) => {
     using var conn = new NpgsqlConnection(connStr);
     var id = await conn.QuerySingleAsync<Guid>(
@@ -94,7 +98,7 @@ app.MapPost("/api/admin/add-result", async (ResultRequest req) => {
     return Results.Ok(new { id });
 });
 
-// 7b. SonuÁ kriteri g¸ncelle (Admin)
+// 7b. Sonu√ß kriteri g√ºncelle (Admin)
 app.MapPut("/api/admin/update-result", async ([Microsoft.AspNetCore.Mvc.FromBody] ResultUpdate req) => {
     try
     {
@@ -107,19 +111,19 @@ app.MapPut("/api/admin/update-result", async ([Microsoft.AspNetCore.Mvc.FromBody
     }
     catch (Exception ex)
     {
-        Console.WriteLine("Result Update Hatas˝: " + ex.Message);
+        Console.WriteLine("Result Update Hatas√Ω: " + ex.Message);
         return Results.Problem(ex.Message);
     }
 });
 
-// 7c. SonuÁ kriteri sil (Admin)
+// 7c. Sonu√ß kriteri sil (Admin)
 app.MapDelete("/api/admin/delete-result/{id}", async (Guid id) => {
     using var conn = new NpgsqlConnection(connStr);
     await conn.ExecuteAsync("DELETE FROM results WHERE id = @id", new { id });
     return Results.Ok();
 });
 
-// 8. Bir quiz'in sonuÁ kriterlerini listele (Admin)
+// 8. Bir quiz'in sonu√ß kriterlerini listele (Admin)
 app.MapGet("/api/admin/results/{quizId}", async (Guid quizId) => {
     using var conn = new NpgsqlConnection(connStr);
     return await conn.QueryAsync(
@@ -135,20 +139,20 @@ app.MapDelete("/api/admin/delete-question/{id}", async (Guid id) => {
     return Results.Ok();
 });
 
-// 10. Soru ve ﬁ˝klar˝ g¸ncelle (Admin)
+// 10. Soru ve √û√Ωklar√Ω g√ºncelle (Admin)
 app.MapPut("/api/admin/update-question", async (QuestionUpdate req) => {
     try
     {
         using var conn = new NpgsqlConnection(connStr);
-        // 1. Sorunun metnini g¸ncelle
+        // 1. Sorunun metnini g√ºncelle
         await conn.ExecuteAsync(
             "UPDATE questions SET questiontext = @Text WHERE id = @Id",
             new { Text = req.Text, Id = req.Id });
 
-        // 2. Bu soruya ait eski ˛˝klar˝ tamamen temizle
+        // 2. Bu soruya ait eski √æ√Ωklar√Ω tamamen temizle
         await conn.ExecuteAsync("DELETE FROM options WHERE questionid = @Id", new { Id = req.Id });
 
-        // 3. Formdan gelen yeni/g¸ncellenmi˛ ˛˝klar˝ ekle
+        // 3. Formdan gelen yeni/g√ºncellenmi√æ √æ√Ωklar√Ω ekle
         if (req.Options != null)
         {
             foreach (var opt in req.Options)
@@ -162,7 +166,7 @@ app.MapPut("/api/admin/update-question", async (QuestionUpdate req) => {
     }
     catch (Exception ex)
     {
-        Console.WriteLine("G¸ncelleme Hatas˝: " + ex.Message);
+        Console.WriteLine("G√ºncelleme Hatas√Ω: " + ex.Message);
         return Results.Problem(ex.Message);
     }
 });
@@ -180,7 +184,7 @@ app.MapPost("/api/admin/add-quiz", async (QuizRequest req) => {
     }
     catch (Exception ex)
     {
-        Console.WriteLine("Quiz Ekleme Hatas˝: " + ex.Message);
+        Console.WriteLine("Quiz Ekleme Hatas√Ω: " + ex.Message);
         return Results.Problem(ex.Message);
     }
 });
@@ -190,11 +194,11 @@ app.MapDelete("/api/admin/delete-quiz/{id}", async (Guid id) => {
     try
     {
         using var conn = new NpgsqlConnection(connStr);
-        // 1. ÷nce bu teste ait sorular˝n ˛˝klar˝n˝ sil
+        // 1. √ñnce bu teste ait sorular√Ωn √æ√Ωklar√Ωn√Ω sil
         await conn.ExecuteAsync("DELETE FROM options WHERE questionid IN (SELECT id FROM questions WHERE quizid = @id)", new { id });
-        // 2. Sorular˝ sil
+        // 2. Sorular√Ω sil
         await conn.ExecuteAsync("DELETE FROM questions WHERE quizid = @id", new { id });
-        // 3. SonuÁ kriterlerini sil
+        // 3. Sonu√ß kriterlerini sil
         await conn.ExecuteAsync("DELETE FROM results WHERE quizid = @id", new { id });
         // 4. En son testi (quiz) sil
         await conn.ExecuteAsync("DELETE FROM quizzes WHERE id = @id", new { id });
@@ -203,7 +207,7 @@ app.MapDelete("/api/admin/delete-quiz/{id}", async (Guid id) => {
     }
     catch (Exception ex)
     {
-        Console.WriteLine("Quiz Silme Hatas˝: " + ex.Message);
+        Console.WriteLine("Quiz Silme Hatas√Ω: " + ex.Message);
         return Results.Problem(ex.Message);
     }
 });
@@ -218,7 +222,7 @@ public record OptionRequest(Guid Questionid, string Text, int Score);
 public record ResultRequest(Guid QuizId, int MinScore, int MaxScore, string Title, string Description, string ImageUrl);
 public record OptionUpdate(Guid Id, string Text, int Score);
 
-// YEN›DEN D‹ZENLENEN KISIM:
+// YEN√ùDEN D√úZENLENEN KISIM:
 public record QuestionUpdate(Guid Id, string Text, List<OptionItem> Options);
 public record OptionItem(string Text, int Score);
 
