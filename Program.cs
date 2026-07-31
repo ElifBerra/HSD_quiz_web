@@ -2,8 +2,9 @@ using Dapper;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.Sources.Clear();
+// Render port yönlendirmesi
 builder.WebHost.UseUrls("http://0.0.0.0:8080");
+
 // Önce Render Environment Variables'a bakar, bulamazsa appsettings'e bakar
 string connStr = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
                  ?? builder.Configuration.GetConnectionString("DefaultConnection") 
