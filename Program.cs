@@ -2,6 +2,7 @@ using Dapper;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.Sources.Clear();
 
 // Önce Render Environment Variables'a bakar, bulamazsa appsettings'e bakar
 string connStr = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
