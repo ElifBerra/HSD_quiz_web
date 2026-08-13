@@ -1,6 +1,7 @@
 using Dapper;
 using Npgsql;
 
+Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "1");
 var builder = WebApplication.CreateBuilder(args);
 // Render port yönlendirmesi
 builder.WebHost.UseUrls("http://0.0.0.0:8080");
