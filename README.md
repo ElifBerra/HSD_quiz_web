@@ -1,4 +1,4 @@
-# https://hsdquiz.up.railway.app/
+# [https://hsdquiz.up.railway.app/](https://hsd-quiz-web.onrender.com)
 # HSD Quiz Web Application
 Bu proje, Huawei Student Developers (HSD) topluluğu için özel olarak geliştirilmiş, dinamik bir test/quiz platformudur. Kullanıcılar sınavlara katılabilir, yöneticiler ise admin paneli üzerinden yeni testler, sorular ve kriterler oluşturabilir.
 
@@ -32,7 +32,7 @@ PostgreSQL (Supabase üzerinden yönetilmektedir)
 Dapper
 
 #### Deployment: 
-Railway.app & Vercel
+Render.com & Railway.app & Vercel
 
 # 📷 Ekran Görüntüleri
 ## Ana sayfa
