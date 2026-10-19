@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -109,11 +109,13 @@
 
                 <div class="inline-flex flex-col items-center justify-center w-24 h-24 rounded-full border-4 border-brand-600 bg-white shadow-md mb-4 -mt-10 relative z-10">
                     <span class="text-3xl font-bold text-brand-600 leading-none" id="result-score-num">0</span>
-                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mt-1">PUAN</span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mt-1" id="result-score-label">PUAN</span>
                 </div>
 
                 <h2 class="text-3xl font-bold text-gray-900 mb-3" id="result-title">Sonuç</h2>
-                <p class="text-gray-500 text-base leading-relaxed mb-8 max-w-sm mx-auto" id="result-desc">Açıklama</p>
+                <p class="text-gray-500 text-base leading-relaxed mb-8 max-w-sm mx-auto whitespace-pre-line" id="result-desc">Açıklama</p>
+
+                <div class="flex flex-col gap-3 text-left mb-8 empty:hidden" id="result-multi"></div>
 
                 <div class="grid grid-cols-2 gap-4 text-left mb-8" id="result-stats"></div>
 
@@ -188,7 +190,8 @@
 
         async function startQuiz(quizId, title) {
             show('loading');
-            activeQuiz = { id: quizId, title: title };
+            const meta = allQuizzes.find(q => q.id === quizId);
+            activeQuiz = { id: quizId, title: title, mode: (meta && meta.scoringmode) || 'score' };
             try {
                 const res = await fetch(`/api/quiz-data/${quizId}`);
                 if (!res.ok) throw new Error('Sorular yüklenemedi');
@@ -197,7 +200,7 @@
                 const map = {};
                 rows.forEach(row => {
                     if (!map[row.questionid]) map[row.questionid] = { id: row.questionid, text: row.questiontext, options: [] };
-                    if (row.optionid) map[row.questionid].options.push({ id: row.optionid, text: row.optiontext, score: row.score });
+                    if (row.optionid) map[row.questionid].options.push({ id: row.optionid, text: row.optiontext, score: row.score, category: (row.category || '').toUpperCase() });
                 });
                 questions = Object.values(map);
 
@@ -227,9 +230,9 @@
             const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
             const list = document.getElementById('options-list');
             list.innerHTML = q.options.map((o, i) => {
-                const isSelected = answers[cur] === o.score;
+                const isSelected = answers[cur] === i;
                 return `
-                    <button onclick="selectOpt(${o.score}, this, ${i})"
+                    <button onclick="selectOpt(${i})"
                             class="w-full text-left p-5 rounded-2xl border-2 transition-all flex items-center gap-4 group shadow-sm
                             ${isSelected ? 'border-brand-600 bg-brand-50 text-brand-900' : 'border-gray-200 bg-white hover:border-brand-300 hover:shadow-md text-gray-700'}">
                         <span class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0 transition-colors
@@ -253,8 +256,9 @@
                 `).join('');
         }
 
-        function selectOpt(score, btn, idx) {
-            answers[cur] = score;
+        // answers[soruIndex] = seçilen şıkkın index'i
+        function selectOpt(idx) {
+            answers[cur] = idx;
             renderQ();
             setTimeout(() => { if (cur < questions.length - 1) nextQ(); }, 350);
         }
@@ -274,9 +278,25 @@
         function prevQ() { if (cur > 0) { cur--; renderQ(); } }
         function goToQ(i) { cur = i; renderQ(); }
 
+        function resetResultScreen() {
+            document.getElementById('result-img-wrap').innerHTML = '<span class="text-5xl">🏆</span>';
+            document.getElementById('result-multi').innerHTML = '';
+            const num = document.getElementById('result-score-num');
+            num.className = 'text-3xl font-bold text-brand-600 leading-none';
+            document.getElementById('result-score-label').textContent = 'PUAN';
+        }
+
+        function setResultImage(url, alt) {
+            if (!url) return;
+            document.getElementById('result-img-wrap').innerHTML = `<img src="${escHtml(url)}" alt="${escHtml(alt)}" class="w-full h-full object-cover" />`;
+        }
+
         async function showResult() {
             show('loading');
-            const totalScore = Object.values(answers).reduce((s, v) => s + v, 0);
+            resetResultScreen();
+            if (activeQuiz.mode === 'category') return showCategoryResult();
+
+            const totalScore = Object.entries(answers).reduce((s, [qi, oi]) => s + (questions[qi].options[oi]?.score || 0), 0);
 
             try {
                 const res = await fetch(`/api/result-by-score?quizId=${activeQuiz.id}&score=${totalScore}`);
@@ -287,10 +307,7 @@
                 document.getElementById('result-title').textContent = data.title || 'Harika!';
                 document.getElementById('result-desc').textContent = data.description || '';
 
-                const imgWrap = document.getElementById('result-img-wrap');
-                if (data.imageurl) {
-                    imgWrap.innerHTML = `<img src="${data.imageurl}" alt="${data.title}" class="w-full h-full object-cover" />`;
-                }
+                setResultImage(data.imageurl, data.title);
 
                 document.getElementById('result-stats').innerHTML = `
                         <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
@@ -303,7 +320,136 @@
                         </div>
                         <div class="bg-gray-50 rounded-xl p-4 col-span-2 border border-gray-100">
                             <div class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Çözülen Test</div>
-                            <div class="text-base font-bold text-gray-900 truncate">${activeQuiz.title}</div>
+                            <div class="text-base font-bold text-gray-900 truncate">${escHtml(activeQuiz.title)}</div>
+                        </div>
+                    `;
+                show('result');
+            } catch (err) {
+                document.getElementById('error-msg').textContent = err.message;
+                show('error');
+            }
+        }
+
+        // ================= KATEGORİ (HARF ÇOĞUNLUĞU) MODU =================
+        // Sonuç kriterlerinde "category" alanı:
+        //   "A"   -> A en çok seçildiğinde
+        //   "C+D" -> kombine: ikisi en yüksek iki alan, ikisi de >= minscore ve fark <= maxscore
+        //   "ESIT"-> en yüksekte eşitlik olduğunda gösterilecek giriş metni
+        function countCategories() {
+            const counts = {};
+            Object.entries(answers).forEach(([qi, oi]) => {
+                const cat = questions[qi].options[oi]?.category;
+                if (cat) counts[cat] = (counts[cat] || 0) + 1;
+            });
+            return counts;
+        }
+
+        function decideCategoryResult(counts, results) {
+            const singles = {};
+            results.filter(r => r.category && !r.category.includes('+') && r.category !== 'ESIT')
+                .forEach(r => singles[r.category] = r);
+            const combos = results.filter(r => r.category && r.category.includes('+'));
+            const tieIntro = results.find(r => r.category === 'ESIT');
+
+            const entries = Object.entries(counts);
+            if (!entries.length) return null;
+
+            // 1) Kombine sonuçlar (örn. Frontend + Backend = Full Stack)
+            for (const combo of combos) {
+                const keys = combo.category.split('+');
+                if (keys.length !== 2) continue;
+                const [x, y] = keys;
+                const cx = counts[x] || 0, cy = counts[y] || 0;
+                const lower = Math.min(cx, cy);
+                const othersBelow = entries.filter(([k]) => k !== x && k !== y).every(([, v]) => v < lower);
+                if (cx >= combo.minscore && cy >= combo.minscore && Math.abs(cx - cy) <= combo.maxscore && othersBelow) {
+                    return { type: 'combo', key: combo.category, main: combo };
+                }
+            }
+
+            // 2) En yüksek kategori(ler)
+            const max = Math.max(...entries.map(([, v]) => v));
+            const top = entries.filter(([, v]) => v === max).map(([k]) => k).sort();
+            const fallback = k => ({ title: `${k} Kategorisi`, description: '', imageurl: '' });
+
+            if (top.length === 1) return { type: 'single', key: top[0], main: singles[top[0]] || fallback(top[0]) };
+            return { type: 'tie', key: top.join('/'), main: tieIntro || null, items: top.map(k => ({ key: k, ...(singles[k] || fallback(k)) })) };
+        }
+
+        async function showCategoryResult() {
+            try {
+                const res = await fetch(`/api/admin/results/${activeQuiz.id}`);
+                if (!res.ok) throw new Error('Sonuç kriterleri yüklenemedi.');
+                const results = (await res.json()).map(r => ({ ...r, category: (r.category || '').toUpperCase() }));
+
+                const counts = countCategories();
+                const decision = decideCategoryResult(counts, results);
+                if (!decision) throw new Error('Bu testteki şıklara kategori atanmamış. Lütfen admin panelinden kategorileri girin.');
+
+                // Daire: kazanan alan(lar)ın harfi
+                const num = document.getElementById('result-score-num');
+                num.textContent = decision.key;
+                if (decision.key.length > 3) num.className = 'text-lg font-bold text-brand-600 leading-none';
+                document.getElementById('result-score-label').textContent = decision.type === 'tie' ? 'EŞİT' : 'ALAN';
+
+                if (decision.type === 'tie') {
+                    document.getElementById('result-title').textContent = decision.main?.title || 'Birden fazla alan eşit çıktı!';
+                    document.getElementById('result-desc').textContent = decision.main?.description || 'Aşağıdaki alanların hepsini keşfedebilirsin.';
+                    setResultImage(decision.main?.imageurl, decision.main?.title);
+                    document.getElementById('result-multi').innerHTML = decision.items.map(it => `
+                        <div class="bg-brand-50 border border-brand-100 rounded-2xl p-5 flex gap-4 items-start">
+                            ${it.imageurl
+                                ? `<img src="${escHtml(it.imageurl)}" class="w-14 h-14 rounded-xl object-cover shrink-0 border-2 border-white shadow-sm" />`
+                                : `<span class="w-10 h-10 rounded-xl bg-brand-600 text-white font-black flex items-center justify-center shrink-0">${escHtml(it.key)}</span>`}
+                            <div class="min-w-0">
+                                <div class="font-bold text-gray-900 text-lg mb-1">${escHtml(it.title)}</div>
+                                <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-line">${escHtml(it.description)}</p>
+                            </div>
+                        </div>`).join('');
+                } else {
+                    document.getElementById('result-title').textContent = decision.main.title || 'Harika!';
+                    document.getElementById('result-desc').textContent = decision.main.description || '';
+                    setResultImage(decision.main.imageurl, decision.main.title);
+                }
+
+                // Sayaç: her kategoriden kaç seçim yapıldı
+                const titles = {};
+                results.filter(r => r.category && !r.category.includes('+') && r.category !== 'ESIT').forEach(r => titles[r.category] = r.title);
+                const allCats = [...new Set([...Object.keys(titles), ...Object.keys(counts)])].sort();
+                const answered = Object.keys(answers).length;
+                const winners = decision.key.split(/[+/]/);
+
+                document.getElementById('result-stats').innerHTML = `
+                        <div class="bg-gray-50 rounded-xl p-4 col-span-2 border border-gray-100">
+                            <div class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Seçim Dağılımın</div>
+                            <div class="flex flex-col gap-2.5">
+                                ${allCats.map(k => {
+                                    const c = counts[k] || 0;
+                                    const pct = answered ? Math.round((c / answered) * 100) : 0;
+                                    const win = winners.includes(k);
+                                    return `
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-7 h-7 rounded-lg text-xs font-black flex items-center justify-center shrink-0 ${win ? 'bg-brand-600 text-white' : 'bg-gray-200 text-gray-600'}">${escHtml(k)}</span>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                                <span class="truncate ${win ? 'text-gray-900' : 'text-gray-500'}">${escHtml(titles[k] || '')}</span>
+                                                <span class="${win ? 'text-brand-600' : 'text-gray-400'} font-black ml-2">${c}</span>
+                                            </div>
+                                            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div class="h-full rounded-full ${win ? 'bg-brand-600' : 'bg-gray-400'}" style="width:${pct}%"></div>
+                                            </div>
+                                        </div>
+                                    </div>`;
+                                }).join('')}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <div class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Cevaplanan</div>
+                            <div class="text-xl font-black text-gray-900">${answered} / ${questions.length}</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <div class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Çözülen Test</div>
+                            <div class="text-base font-bold text-gray-900 truncate">${escHtml(activeQuiz.title)}</div>
                         </div>
                     `;
                 show('result');
