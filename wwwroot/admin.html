@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -83,6 +83,10 @@
                     <h2 class="text-sm font-bold text-gray-900 mb-4">Yeni Test Oluştur</h2>
                     <div class="flex flex-col sm:flex-row gap-3">
                         <input type="text" id="new-quiz-title" placeholder="Örn: Yazılım Geliştirici Profil Testi" class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-500 focus:bg-white transition-colors">
+                        <select id="new-quiz-mode" class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 focus:outline-none focus:border-brand-500">
+                            <option value="score">Puan toplamı</option>
+                            <option value="category">Kategori (harf çoğunluğu)</option>
+                        </select>
                         <button onclick="saveNewQuiz()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-8 py-3 rounded-xl transition-colors whitespace-nowrap shadow-md">Testi Oluştur</button>
                     </div>
                 </div>
@@ -153,6 +157,16 @@
                     <div class="absolute top-0 left-0 w-1 h-full bg-brand-600"></div>
                     <h3 class="font-bold text-gray-900 mb-5 text-lg">Yeni Kriter</h3>
 
+                    <div id="crit-cat-wrap" class="hidden mb-5 bg-brand-50 border border-brand-100 rounded-xl p-4">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Kategori</label>
+                        <input type="text" id="crit-cat" placeholder="Örn: A   ·   kombine: C+D   ·   eşitlik: ESIT" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm uppercase focus:outline-none focus:border-brand-500 font-bold text-brand-700">
+                        <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+                            <b>Tek harf (A, B…)</b>: o kategori en çok seçildiğinde gösterilir. Min/Max alanları kullanılmaz.<br>
+                            <b>Kombine (C+D)</b>: iki kategori en yüksek iki alansa, ikisi de en az <b>Min</b> sayıdaysa ve aralarındaki fark en fazla <b>Max</b> ise gösterilir.<br>
+                            <b>ESIT</b>: en yüksekte eşitlik olduğunda, eşit çıkan kategorilerin üstünde gösterilecek giriş metni.
+                        </p>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-5">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Profil Adı</label>
@@ -160,11 +174,11 @@
                         </div>
                         <div class="flex gap-4">
                             <div class="flex-1">
-                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Min Puan</label>
+                                <label id="crit-min-label" class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Min Puan</label>
                                 <input type="number" id="crit-min" placeholder="0" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-500 text-brand-600 font-bold text-center">
                             </div>
                             <div class="flex-1">
-                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Max Puan</label>
+                                <label id="crit-max-label" class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Max Puan</label>
                                 <input type="number" id="crit-max" placeholder="40" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-500 text-brand-600 font-bold text-center">
                             </div>
                         </div>
@@ -218,6 +232,7 @@
         let isEditing = false;
         let editingId = null;
         let optCount = 0;
+        let currentQuestionCount = 0;
 
         window.onload = async () => {
             await loadQuizzes();
@@ -269,7 +284,14 @@
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                                 <h3 class="font-bold text-gray-900 text-lg mb-1 pr-8">${escHtml(q.title)}</h3>
-                                <p class="text-xs text-gray-400 font-mono mb-5 break-all">${q.id}</p>
+                                <p class="text-xs text-gray-400 font-mono mb-3 break-all">${q.id}</p>
+                                <label class="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">
+                                    Puanlama:
+                                    <select onchange="setQuizMode('${q.id}', this.value)" class="bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-bold text-gray-700 normal-case tracking-normal focus:outline-none focus:border-brand-500">
+                                        <option value="score" ${!isCategoryQuiz(q.id) ? 'selected' : ''}>Puan toplamı</option>
+                                        <option value="category" ${isCategoryQuiz(q.id) ? 'selected' : ''}>Kategori (harf çoğunluğu)</option>
+                                    </select>
+                                </label>
                                 <div class="mt-auto flex gap-3">
                                     <button onclick="document.getElementById('quiz-sel').value='${q.id}'; switchSection('questions', document.querySelectorAll('.side-item')[1]); loadQuestions('${q.id}');" class="flex-1 bg-brand-50 text-brand-700 text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-brand-600 hover:text-white transition-colors text-center border border-brand-100 hover:border-brand-600">Sorular</button>
                                     <button onclick="document.getElementById('quiz-sel-crit').value='${q.id}'; switchSection('criteria', document.querySelectorAll('.side-item')[2]); loadCriteria('${q.id}');" class="flex-1 bg-gray-50 text-gray-700 border border-gray-200 text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-center">Kriterler</button>
@@ -289,13 +311,34 @@
                 const res = await fetch('/api/admin/add-quiz', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ Title: title })
+                    body: JSON.stringify({ Title: title, ScoringMode: document.getElementById('new-quiz-mode').value })
                 });
                 if (!res.ok) throw new Error('Kaydedilemedi');
                 showToast('Yeni test oluşturuldu ✓');
                 titleInput.value = '';
                 loadQuizzes();
             } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        // --- Kategori (harf çoğunluğu) modu yardımcıları ---
+        function isCategoryQuiz(id) {
+            const q = allQuizzes.find(x => x.id === id);
+            return !!q && q.scoringmode === 'category';
+        }
+
+        async function setQuizMode(id, mode) {
+            try {
+                const res = await fetch('/api/admin/quiz-mode', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Id: id, ScoringMode: mode })
+                });
+                if (!res.ok) throw new Error();
+                const q = allQuizzes.find(x => x.id === id);
+                if (q) q.scoringmode = mode;
+                showToast(mode === 'category' ? 'Kategori moduna alındı ✓' : 'Puan toplamı moduna alındı ✓');
+                if (activeQuizId === id) loadQuestions(id);
+                if (document.getElementById('quiz-sel-crit').value === id) loadCriteria(id);
+            } catch { showToast('Puanlama türü değiştirilemedi', 'error'); }
         }
 
         async function deleteQuiz(id) {
@@ -332,9 +375,11 @@
                 const map = {};
                 rows.forEach(r => {
                     if (!map[r.questionid]) map[r.questionid] = { id: r.questionid, text: r.questiontext, options: [] };
-                    if (r.optionid) map[r.questionid].options.push({ id: r.optionid, text: r.optiontext, score: r.score });
+                    if (r.optionid) map[r.questionid].options.push({ id: r.optionid, text: r.optiontext, score: r.score, category: r.category || '' });
                 });
                 const questions = Object.values(map);
+                currentQuestionCount = questions.length;
+                const catMode = isCategoryQuiz(quizId);
 
                 if (!questions.length) {
                     list.innerHTML = `<div class="bg-white border border-dashed border-gray-300 rounded-3xl p-10 text-center shadow-sm"><div class="text-5xl mb-4">📝</div><h3 class="font-bold text-gray-900 text-xl mb-2">Soru Bulunamadı</h3><p class="text-gray-500 mb-6">Bu teste henüz soru eklenmemiş.</p><button onclick="toggleAddQForm()" class="bg-brand-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-brand-700 shadow-md">İlk Soruyu Ekle</button></div>`;
@@ -355,7 +400,9 @@
                                     <div class="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-2 pl-3">
                                         <span class="text-xs font-black text-brand-700 bg-brand-100 w-7 h-7 rounded-lg flex items-center justify-center shrink-0">${letters[oi] || oi + 1}</span>
                                         <input type="text" class="opt-text-input flex-1 bg-transparent border-none text-sm text-gray-800 font-medium outline-none truncate pointer-events-none" value="${escHtml(o.text)}" />
-                                        <input type="number" class="opt-score-input w-12 text-center bg-white border border-gray-200 rounded-lg text-sm font-black text-brand-600 py-1.5 outline-none pointer-events-none shadow-sm" value="${o.score}" />
+                                        ${catMode
+                                            ? `<input type="text" title="Kategori" class="opt-cat-input w-12 text-center bg-brand-600 border border-brand-600 rounded-lg text-sm font-black text-white py-1.5 outline-none pointer-events-none shadow-sm" value="${escHtml(o.category)}" />`
+                                            : `<input type="number" class="opt-score-input w-12 text-center bg-white border border-gray-200 rounded-lg text-sm font-black text-brand-600 py-1.5 outline-none pointer-events-none shadow-sm" value="${o.score}" />`}
                                     </div>
                                 `).join('')}
                             </div>
@@ -376,7 +423,8 @@
                 isEditing = false;
                 editingId = null;
                 optCount = 0;
-                for (let i = 0; i < 4; i++) addOptField();
+                const defaultOpts = isCategoryQuiz(activeQuizId) ? 5 : 4;
+                for (let i = 0; i < defaultOpts; i++) addOptField();
             } else {
                 form.classList.add('hidden');
             }
@@ -385,12 +433,15 @@
         function addOptField() {
             const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
             const i = optCount++;
+            const catMode = isCategoryQuiz(activeQuizId);
             const div = document.createElement('div');
             div.className = 'opt-row flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-2 pl-3';
             div.innerHTML = `
                     <span class="text-xs font-black text-gray-500 w-7 h-7 rounded-lg bg-gray-200 flex items-center justify-center shrink-0">${letters[i] || i + 1}</span>
                     <input class="opt-text-input flex-1 bg-transparent border-none text-sm text-gray-900 focus:outline-none placeholder-gray-400 font-semibold" placeholder="Şık metnini yazın..." id="opt-text-${i}" />
-                    <input class="opt-score-input w-16 text-center bg-white border border-gray-200 rounded-lg text-sm font-black text-brand-600 py-2 focus:border-brand-500 outline-none shadow-sm" type="number" placeholder="Puan" id="opt-score-${i}" value="${i + 1}" />
+                    ${catMode
+                        ? `<input class="opt-cat-input w-20 text-center uppercase bg-white border border-gray-200 rounded-lg text-sm font-black text-brand-600 py-2 focus:border-brand-500 outline-none shadow-sm" type="text" maxlength="10" placeholder="Kategori" title="Bu şık hangi kategoriye sayılsın? (örn. A)" id="opt-cat-${i}" value="${letters[i] || ''}" />`
+                        : `<input class="opt-score-input w-16 text-center bg-white border border-gray-200 rounded-lg text-sm font-black text-brand-600 py-2 focus:border-brand-500 outline-none shadow-sm" type="number" placeholder="Puan" id="opt-score-${i}" value="${i + 1}" />`}
                     <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-brand-600 px-3 font-bold text-lg shrink-0">✕</button>
                 `;
             document.getElementById('new-opts-list').appendChild(div);
@@ -404,6 +455,7 @@
             const qText = document.getElementById(`q-text-${id}`).value;
             const optTexts = qCard.querySelectorAll('.opt-text-input');
             const optScores = qCard.querySelectorAll('.opt-score-input');
+            const optCats = qCard.querySelectorAll('.opt-cat-input');
 
             const form = document.getElementById('add-q-form');
             form.classList.remove('hidden');
@@ -417,7 +469,10 @@
             optTexts.forEach((input, index) => {
                 addOptField();
                 document.getElementById(`opt-text-${index}`).value = input.value;
-                document.getElementById(`opt-score-${index}`).value = optScores[index].value;
+                const scoreEl = document.getElementById(`opt-score-${index}`);
+                const catEl = document.getElementById(`opt-cat-${index}`);
+                if (scoreEl && optScores[index]) scoreEl.value = optScores[index].value;
+                if (catEl && optCats[index]) catEl.value = optCats[index].value;
             });
 
             document.getElementById('save-btn').textContent = "Değişiklikleri Güncelle";
@@ -433,9 +488,15 @@
             const options = [];
             optsList.forEach((row, i) => {
                 const optText = row.querySelector('.opt-text-input').value.trim();
-                const optScore = parseInt(row.querySelector('.opt-score-input').value) || 0;
-                if (optText) options.push({ Text: optText, Score: optScore });
+                const scoreEl = row.querySelector('.opt-score-input');
+                const catEl = row.querySelector('.opt-cat-input');
+                const optScore = scoreEl ? (parseInt(scoreEl.value) || 0) : 1;
+                const optCat = catEl ? catEl.value.trim().toUpperCase() : null;
+                if (optText) options.push({ Text: optText, Score: optScore, Category: optCat });
             });
+            if (isCategoryQuiz(activeQuizId) && options.some(o => !o.Category)) {
+                showToast('Kategori modunda her şıkka bir kategori (örn. A) girin', 'error'); return;
+            }
 
             const saveBtn = document.getElementById('save-btn');
             const origText = saveBtn.textContent;
@@ -452,7 +513,7 @@
                 } else {
                     const qRes = await fetch('/api/admin/add-question', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ QuizId: activeQuizId, Text: text, OrderNum: 1 })
+                        body: JSON.stringify({ QuizId: activeQuizId, Text: text, OrderNum: currentQuestionCount + 1 })
                     });
                     if (!qRes.ok) throw new Error('Soru kaydedilemedi');
                     const { id: questionId } = await qRes.json();
@@ -460,7 +521,7 @@
                     for (let opt of options) {
                         await fetch('/api/admin/add-option', {
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ Questionid: questionId, Text: opt.Text, Score: opt.Score })
+                            body: JSON.stringify({ Questionid: questionId, Text: opt.Text, Score: opt.Score, Category: opt.Category })
                         });
                     }
                     showToast('Soru eklendi ✓');
@@ -482,6 +543,7 @@
         async function loadCriteria(quizId) {
             const list = document.getElementById('crit-list');
             if (!quizId) { list.innerHTML = ''; return; }
+            applyCritFormMode();
             list.innerHTML = `<div class="text-center py-10 text-gray-400 font-semibold">Kriterler yükleniyor...</div>`;
             try {
                 const res = await fetch(`/api/admin/results/${quizId}`);
@@ -495,26 +557,44 @@
             } catch { list.innerHTML = `<div class="text-brand-600 bg-brand-50 rounded-xl p-6 text-center font-bold">Yükleme hatası</div>`; }
         }
 
+        function applyCritFormMode() {
+            const catMode = isCategoryQuiz(document.getElementById('quiz-sel-crit').value);
+            document.getElementById('crit-cat-wrap').classList.toggle('hidden', !catMode);
+            document.getElementById('crit-min-label').textContent = catMode ? 'Kombine: Min Sayı' : 'Min Puan';
+            document.getElementById('crit-max-label').textContent = catMode ? 'Kombine: Max Fark' : 'Max Puan';
+            document.getElementById('crit-min').placeholder = catMode ? '3' : '0';
+            document.getElementById('crit-max').placeholder = catMode ? '1' : '40';
+        }
+
         function toggleAddCritForm() {
             if (!document.getElementById('quiz-sel-crit').value) { showToast('Üstten test seç', 'error'); return; }
+            applyCritFormMode();
             document.getElementById('add-crit-form').classList.toggle('hidden');
         }
 
         async function saveCriteria() {
             const quizId = document.getElementById('quiz-sel-crit').value;
+            const catMode = isCategoryQuiz(quizId);
             const title = document.getElementById('crit-title').value.trim();
-            const min = document.getElementById('crit-min').value;
-            const max = document.getElementById('crit-max').value;
+            let min = document.getElementById('crit-min').value;
+            let max = document.getElementById('crit-max').value;
             const desc = document.getElementById('crit-desc').value.trim();
             const img = document.getElementById('crit-img').value.trim();
+            const cat = catMode ? document.getElementById('crit-cat').value.trim().toUpperCase().replace(/\s+/g, '') : null;
 
-            if (!title || !min || !max) { showToast('Gerekli alanları doldur', 'error'); return; }
+            if (catMode) {
+                if (!title || !cat) { showToast('Profil adı ve kategori zorunlu', 'error'); return; }
+                if (cat.includes('+')) { min = min || '3'; max = max || '1'; }
+                else { min = min || '0'; max = max || '0'; }
+            } else if (!title || !min || !max) { showToast('Gerekli alanları doldur', 'error'); return; }
 
             try {
-                await fetch('/api/admin/add-result', {
+                const res = await fetch('/api/admin/add-result', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ QuizId: quizId, MinScore: parseInt(min), MaxScore: parseInt(max), Title: title, Description: desc, ImageUrl: img })
+                    body: JSON.stringify({ QuizId: quizId, MinScore: parseInt(min), MaxScore: parseInt(max), Title: title, Description: desc, ImageUrl: img, Category: cat })
                 });
+                if (!res.ok) throw new Error();
+                ['crit-title', 'crit-min', 'crit-max', 'crit-desc', 'crit-img', 'crit-cat'].forEach(id => document.getElementById(id).value = '');
                 showToast('Kriter kaydedildi');
                 document.getElementById('add-crit-form').classList.add('hidden');
                 loadCriteria(quizId);
@@ -528,7 +608,7 @@
             card.innerHTML = `
                     <div class="p-6 flex-1 border-b sm:border-b-0 sm:border-r border-gray-100 flex flex-col justify-center">
                         <div class="flex items-center gap-3 mb-3">
-                            <span class="bg-brand-50 border border-brand-100 text-brand-700 font-black text-xs px-3 py-1.5 rounded-lg">${c.minscore} - ${c.maxscore} PUAN</span>
+                            <span class="bg-brand-50 border border-brand-100 text-brand-700 font-black text-xs px-3 py-1.5 rounded-lg whitespace-nowrap">${critBadge(c)}</span>
                             <h4 class="font-bold text-gray-900 text-xl">${escHtml(c.title)}</h4>
                         </div>
                         <p class="text-sm text-gray-500 leading-relaxed font-medium">${escHtml(c.description || 'Açıklama yok')}</p>
@@ -539,6 +619,13 @@
                     </div>
                 `;
             list.appendChild(card);
+        }
+
+        function critBadge(c) {
+            if (!c.category) return `${c.minscore} - ${c.maxscore} PUAN`;
+            if (c.category === 'ESIT') return 'EŞİTLİK';
+            if (c.category.includes('+')) return `${escHtml(c.category)} · min ${c.minscore}, fark ≤ ${c.maxscore}`;
+            return `KATEGORİ ${escHtml(c.category)}`;
         }
 
         async function deleteCriteria(id) {
