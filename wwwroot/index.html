@@ -370,7 +370,7 @@
             // 2) En yüksek kategori(ler)
             const max = Math.max(...entries.map(([, v]) => v));
             const top = entries.filter(([, v]) => v === max).map(([k]) => k).sort();
-            const fallback = k => ({ title: `${k} Kategorisi`, description: '', imageurl: '' });
+            const fallback = k => ({ title: 'Sonucun', description: '', imageurl: '' });
 
             if (top.length === 1) return { type: 'single', key: top[0], main: singles[top[0]] || fallback(top[0]) };
             return { type: 'tie', key: top.join('/'), main: tieIntro || null, items: top.map(k => ({ key: k, ...(singles[k] || fallback(k)) })) };
@@ -386,11 +386,9 @@
                 const decision = decideCategoryResult(counts, results);
                 if (!decision) throw new Error('Bu testteki şıklara kategori atanmamış. Lütfen admin panelinden kategorileri girin.');
 
-                // Daire: kazanan alan(lar)ın harfi
-                const num = document.getElementById('result-score-num');
-                num.textContent = decision.key;
-                if (decision.key.length > 3) num.className = 'text-lg font-bold text-brand-600 leading-none';
-                document.getElementById('result-score-label').textContent = decision.type === 'tie' ? 'EŞİT' : 'ALAN';
+                // Daire: harf/kategori göstermeden nötr bir işaret
+                document.getElementById('result-score-num').textContent = decision.type === 'tie' ? '🤝' : '✓';
+                document.getElementById('result-score-label').textContent = 'SONUÇ';
 
                 if (decision.type === 'tie') {
                     document.getElementById('result-title').textContent = decision.main?.title || 'Birden fazla alan eşit çıktı!';
@@ -400,7 +398,7 @@
                         <div class="bg-brand-50 border border-brand-100 rounded-2xl p-5 flex gap-4 items-start">
                             ${it.imageurl
                                 ? `<img src="${escHtml(it.imageurl)}" class="w-14 h-14 rounded-xl object-cover shrink-0 border-2 border-white shadow-sm" />`
-                                : `<span class="w-10 h-10 rounded-xl bg-brand-600 text-white font-black flex items-center justify-center shrink-0">${escHtml(it.key)}</span>`}
+                                : `<span class="w-10 h-10 rounded-xl bg-brand-600 text-white font-black flex items-center justify-center shrink-0">★</span>`}
                             <div class="min-w-0">
                                 <div class="font-bold text-gray-900 text-lg mb-1">${escHtml(it.title)}</div>
                                 <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-line">${escHtml(it.description)}</p>
@@ -412,37 +410,10 @@
                     setResultImage(decision.main.imageurl, decision.main.title);
                 }
 
-                // Sayaç: her kategoriden kaç seçim yapıldı
-                const titles = {};
-                results.filter(r => r.category && !r.category.includes('+') && r.category !== 'ESIT').forEach(r => titles[r.category] = r.title);
-                const allCats = [...new Set([...Object.keys(titles), ...Object.keys(counts)])].sort();
+                // Kategori sayıları kullanıcıya gösterilmez (hangi harfin hangi alana gittiği gizli kalsın)
                 const answered = Object.keys(answers).length;
-                const winners = decision.key.split(/[+/]/);
 
                 document.getElementById('result-stats').innerHTML = `
-                        <div class="bg-gray-50 rounded-xl p-4 col-span-2 border border-gray-100">
-                            <div class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Seçim Dağılımın</div>
-                            <div class="flex flex-col gap-2.5">
-                                ${allCats.map(k => {
-                                    const c = counts[k] || 0;
-                                    const pct = answered ? Math.round((c / answered) * 100) : 0;
-                                    const win = winners.includes(k);
-                                    return `
-                                    <div class="flex items-center gap-3">
-                                        <span class="w-7 h-7 rounded-lg text-xs font-black flex items-center justify-center shrink-0 ${win ? 'bg-brand-600 text-white' : 'bg-gray-200 text-gray-600'}">${escHtml(k)}</span>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex justify-between text-xs font-semibold mb-1">
-                                                <span class="truncate ${win ? 'text-gray-900' : 'text-gray-500'}">${escHtml(titles[k] || '')}</span>
-                                                <span class="${win ? 'text-brand-600' : 'text-gray-400'} font-black ml-2">${c}</span>
-                                            </div>
-                                            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                <div class="h-full rounded-full ${win ? 'bg-brand-600' : 'bg-gray-400'}" style="width:${pct}%"></div>
-                                            </div>
-                                        </div>
-                                    </div>`;
-                                }).join('')}
-                            </div>
-                        </div>
                         <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
                             <div class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Cevaplanan</div>
                             <div class="text-xl font-black text-gray-900">${answered} / ${questions.length}</div>
