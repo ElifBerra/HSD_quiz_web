@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HSD Test Merkezi</title>
+    <link rel="icon" type="image/png" href="hsd-logo (1).png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -256,7 +257,6 @@
                 `).join('');
         }
 
-        // answers[soruIndex] = seçilen şıkkın index'i
         function selectOpt(idx) {
             answers[cur] = idx;
             renderQ();
@@ -330,11 +330,6 @@
             }
         }
 
-        // ================= KATEGORİ (HARF ÇOĞUNLUĞU) MODU =================
-        // Sonuç kriterlerinde "category" alanı:
-        //   "A"   -> A en çok seçildiğinde
-        //   "C+D" -> kombine: ikisi en yüksek iki alan, ikisi de >= minscore ve fark <= maxscore
-        //   "ESIT"-> en yüksekte eşitlik olduğunda gösterilecek giriş metni
         function countCategories() {
             const counts = {};
             Object.entries(answers).forEach(([qi, oi]) => {
@@ -354,7 +349,6 @@
             const entries = Object.entries(counts);
             if (!entries.length) return null;
 
-            // 1) Kombine sonuçlar (örn. Frontend + Backend = Full Stack)
             for (const combo of combos) {
                 const keys = combo.category.split('+');
                 if (keys.length !== 2) continue;
@@ -367,7 +361,6 @@
                 }
             }
 
-            // 2) En yüksek kategori(ler)
             const max = Math.max(...entries.map(([, v]) => v));
             const top = entries.filter(([, v]) => v === max).map(([k]) => k).sort();
             const fallback = k => ({ title: 'Sonucun', description: '', imageurl: '' });
@@ -386,7 +379,6 @@
                 const decision = decideCategoryResult(counts, results);
                 if (!decision) throw new Error('Bu testteki şıklara kategori atanmamış. Lütfen admin panelinden kategorileri girin.');
 
-                // Daire: harf/kategori göstermeden nötr bir işaret
                 document.getElementById('result-score-num').textContent = decision.type === 'tie' ? '🤝' : '✓';
                 document.getElementById('result-score-label').textContent = 'SONUÇ';
 
@@ -410,7 +402,6 @@
                     setResultImage(decision.main.imageurl, decision.main.title);
                 }
 
-                // Kategori sayıları kullanıcıya gösterilmez (hangi harfin hangi alana gittiği gizli kalsın)
                 const answered = Object.keys(answers).length;
 
                 document.getElementById('result-stats').innerHTML = `
@@ -435,7 +426,6 @@
             show('home');
         }
 
-        // KESME İŞARETİ HATASINI ÇÖZEN KISIM:
         function escHtml(s) {
             if (!s) return '';
             return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
